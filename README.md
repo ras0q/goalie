@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/ras0q/goalie.svg)](https://pkg.go.dev/github.com/ras0q/goalie)
 
-Goalie (/góʊli/) is a Go library for **reliably capturing errors from `deferr`'d functions** like `file.Close()`, `conn.Close()`, or `tx.Rollback()`.
+Goalie (/góʊli/) is a Go library for **reliably capturing errors from `defer`'d functions** like `file.Close()`, `conn.Close()`, or `tx.Rollback()`.
 
 It collects and returns these errors from `defer`'d functions. They are never missed!
 
