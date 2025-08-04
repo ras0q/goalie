@@ -13,7 +13,7 @@ The name "Goalie" comes from its role in catching errors at the end in Go.
 > [!CAUTION]
 > Goalie is only for handling errors from `defer`'d functions, not for general error handling.
 
-See [./goalie_test.go](./goalie_test.go) for details.
+See [./goalie_test.go](./goalie_test.go) and [./_examples](./_examples) for details.
 
 ```go
 package main
