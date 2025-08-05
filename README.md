@@ -17,39 +17,39 @@ See [Godoc](https://pkg.go.dev/github.com/ras0q/goalie), [./goalie_test.go](./go
 package main
 
 import (
-	"errors"
-	"fmt"
-	"os"
+    "errors"
+    "fmt"
+    "os"
 
-	"github.com/ras0q/goalie"
+    "github.com/ras0q/goalie"
 )
 
 func main() {
-	if err := run(); err != nil {
-		fmt.Printf("Error: %v\n", err)
-	}
+    if err := run(); err != nil {
+        fmt.Printf("Error: %v\n", err)
+    }
 }
 
 func run() (err error) {
-	g := goalie.New()
+    g := goalie.New()
     // Collects all captured errors at the end of the function,
     // ensuring that deferred errors are propagated.
-	defer g.Collect(&err)
+    defer g.Collect(&err)
 
-	// Normal error handling for non-deferred operations should be done separately.
-	f, err := os.Open("example.txt")
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
+    // Normal error handling for non-deferred operations should be done separately.
+    f, err := os.Open("example.txt")
+    if err != nil {
+        return fmt.Errorf("failed to open file: %w", err)
+    }
 
-	// Use g.Guard to capture errors from `defer`'d functions (e.g., file.Close(), conn.Close()).
-	defer g.Guard(f.Close)
+    // Use g.Guard to capture errors from `defer`'d functions (e.g., file.Close(), conn.Close()).
+    defer g.Guard(f.Close)
 
-	// Simulate another `defer`'d cleanup operation that might return an error
-	defer g.Guard(func() error {
-		return errors.New("error from a deferred cleanup operation")
-	})
+    // Simulate another `defer`'d cleanup operation that might return an error
+    defer g.Guard(func() error {
+        return errors.New("error from a deferred cleanup operation")
+    })
 
-	return nil
+    return nil
 }
 ```
