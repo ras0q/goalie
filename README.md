@@ -4,14 +4,14 @@
 
 Goalie (/góʊli/) is a Go library designed to **reliably capture and collect errors from `defer`'d functions**, such as `file.Close()`, `conn.Close()`, or `tx.Rollback()`.
 
-Named for its role in "catching" errors at the end of Go function execution, Goalie ensures that no errors from deferred cleanup operations are missed.
+Named for its role, much like a **goalie (goalkeeper)**, Goalie ensures that no errors from deferred cleanup operations are missed at the end of Go function execution.
 
 ## Usage
 
 > [!CAUTION]
 > Goalie is only for handling errors from `defer`'d functions, not for general error handling.
 
-See [./goalie_test.go](./goalie_test.go) and [./_examples](./_examples) for details.
+See [Godoc](https://pkg.go.dev/github.com/ras0q/goalie), [./goalie_test.go](./goalie_test.go) and [./_examples](./_examples) for details.
 
 ```go
 package main
