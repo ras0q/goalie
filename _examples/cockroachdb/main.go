@@ -16,7 +16,7 @@ func main() {
 
 func run() (err error) {
 	g := goalie.New(
-		goalie.WithJoinFunc(errors.Join),
+		goalie.WithJoinErrorsFunc(errors.Join),
 	)
 	// At the end of the function, Goalie collects all captured errors
 	defer g.Collect(&err)
