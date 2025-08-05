@@ -32,8 +32,7 @@ func main() {
 
 func run() (err error) {
     g := goalie.New()
-    // Collects all captured errors at the end of the function,
-    // ensuring that deferred errors are propagated.
+    // Collects all captured errors at the end of the function.
     defer g.Collect(&err)
 
     // Normal error handling for non-deferred operations should be done separately.
@@ -42,7 +41,7 @@ func run() (err error) {
         return fmt.Errorf("failed to open file: %w", err)
     }
 
-    // Use g.Guard to capture errors from `defer`'d functions (e.g., file.Close(), conn.Close()).
+    // Use g.Guard to capture errors from deferred functions (e.g., file.Close(), conn.Close()).
     defer g.Guard(f.Close)
 
     // Simulate another `defer`'d cleanup operation that might return an error
@@ -62,6 +61,9 @@ The tool will analyze your code and suggest fixes for any `defer` statements tha
 
 ### Usage
 
+> [!CAUTION]
+> Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
+
 Run the migrator on your project:
 
 ```bash
@@ -72,5 +74,3 @@ go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -diff -fix ./
 go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -fix ./...
 ```
 
-> [!CAUTION]
-> Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
