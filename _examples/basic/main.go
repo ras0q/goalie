@@ -41,7 +41,7 @@ func run() (err error) {
 		return fmt.Errorf("%w: failed to open file: %w", ErrInternal, err)
 	}
 	// defer f.Close()     // 🧐 errcheck: Error return value of `f.Close` is not checked.
-	defer g.Guard(f.Close) // ✅ Use g.Guard to capture errors from deferred functions.
+	defer g.Guard(f.Close) // ✅ Use g.Guard to capture errors from the deferred cleanup function.
 
 	// ❌ This code close the file explicitly by mistake.
 	_ = f.Close()
