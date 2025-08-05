@@ -13,7 +13,7 @@ var (
 )
 
 // This function has too many bugs 😅
-func countLines(path string) (n int, err error) {
+func countLines(path string) (_ int, err error) {
 	g := goalie.New()
 	defer g.Collect(&err)
 

@@ -1,0 +1,49 @@
+// nolint: errcheck
+package main
+
+import (
+	"fmt"
+	"github.com/ras0q/goalie"
+)
+
+func main() {
+	if _, err := run(); err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+}
+
+func run() (_ int, err error) {
+	g := goalie.New()
+	defer g.Collect(&err)
+
+	defer g.Guard(f) // want `missed error in defer statement: f\(\)`
+	defer g.Guard(func() error {
+		return g("hello")
+	}) // want `missed error in defer statement: g\(\"hello\"\)`
+
+	s := S{}
+	defer g.Guard(s.f) // want `missed error in defer statement: s\.f\(\)`
+	defer g.Guard(func() error {
+		return s.g("world")
+	}) // want `missed error in defer statement: s\.g\(\"world\"\)`
+
+	return 0, nil
+}
+
+func f() error {
+	return fmt.Errorf("error from f()")
+}
+
+func g(s string) error {
+	return fmt.Errorf("error from g(%s)", s)
+}
+
+type S struct{}
+
+func (S) f() error {
+	return fmt.Errorf("error from f()")
+}
+
+func (S) g(s string) error {
+	return fmt.Errorf("error from g(%s)", s)
+}
