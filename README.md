@@ -66,11 +66,11 @@ Run the migrator on your project:
 
 ```bash
 # Check changes
-go run gihtub.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -diff -fix ./...
+go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -diff -fix ./...
 
 # Apply changes
-go run gihtub.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -fix ./...
+go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -fix ./...
 ```
 
-> [!CAUTION]:
+> [!CAUTION]
 > Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
