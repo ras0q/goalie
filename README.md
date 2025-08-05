@@ -53,3 +53,24 @@ func run() (err error) {
     return nil
 }
 ```
+
+## Integrating Goalie into Existing Projects
+
+For existing projects, we provide a migration tool to automatically insert Goalie's error handling patterns!
+
+The tool will analyze your code and suggest fixes for any `defer` statements that might be missing error handling.
+
+### Usage
+
+Run the migrator on your project:
+
+```bash
+# Check changes
+go run gihtub.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -diff -fix ./...
+
+# Apply changes
+go run gihtub.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -fix ./...
+```
+
+> [!CAUTION]:
+> Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
