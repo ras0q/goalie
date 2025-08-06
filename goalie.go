@@ -9,6 +9,7 @@ import (
 // Goalie is the main struct that manages captured error.
 type Goalie struct {
 	errs           []error
+	wrapErrorFunc  WrapErrorFunc
 	joinErrorsFunc JoinErrorsFunc
 }
 
@@ -56,12 +57,27 @@ func (g *Goalie) Collect(errp *error) {
 //	defer g.Guard(file.Close)
 func (g *Goalie) Guard(errFunc func() error) {
 	if err := errFunc(); err != nil {
+		if g.wrapErrorFunc != nil {
+			err = g.wrapErrorFunc(err)
+		}
+
 		g.errs = append(g.errs, err)
 	}
 }
 
 // Option is a function that configures a [Goalie] instance.
 type Option func(*Goalie)
+
+// WrapErrorFunc is a function type for wrapping a captured error.
+// By default, Goalie doesn't wrap the error.
+type WrapErrorFunc func(error) error
+
+// WithWrapErrorFunc sets the function used to wrap an error.
+func WithWrapErrorFunc(wrapErrorFunc WrapErrorFunc) Option {
+	return func(g *Goalie) {
+		g.wrapErrorFunc = wrapErrorFunc
+	}
+}
 
 // JoinErrorsFunc is a function type for joining multiple errors into a single error.
 // By default, Goalie uses [errors.Join].
