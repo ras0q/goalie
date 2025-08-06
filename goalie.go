@@ -15,9 +15,7 @@ type Goalie struct {
 
 // New creates a new Goalie instance.
 func New(options ...Option) *Goalie {
-	g := Goalie{
-		joinErrorsFunc: errors.Join,
-	}
+	g := Goalie{}
 
 	for _, o := range options {
 		o(&g)
@@ -44,7 +42,12 @@ func New(options ...Option) *Goalie {
 //	}
 func (g *Goalie) Collect(errp *error) {
 	errs := append(g.errs, *errp)
-	*errp = g.joinErrorsFunc(errs...)
+	joinErrorsFunc := g.joinErrorsFunc
+	if g.joinErrorsFunc == nil {
+		joinErrorsFunc = errors.Join
+	}
+
+	*errp = joinErrorsFunc(errs...)
 }
 
 // Guard executes the given function `errFunc` and captures any error returned.
@@ -88,8 +91,8 @@ type JoinErrorsFunc func(...error) error
 // This option allows you to customize how captured errors are combined.
 // For example, you can use a custom function like [github.com/cockroachdb/errors.Join]
 // to include stack traces or other custom error wrapping logic.
-func WithJoinErrorsFunc(joinFunc JoinErrorsFunc) Option {
+func WithJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) Option {
 	return func(g *Goalie) {
-		g.joinErrorsFunc = joinFunc
+		g.joinErrorsFunc = joinErrorsFunc
 	}
 }
