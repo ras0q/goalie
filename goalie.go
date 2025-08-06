@@ -41,7 +41,16 @@ func New(options ...Option) *Goalie {
 //		return nil
 //	}
 func (g *Goalie) Collect(errp *error) {
-	errs := append(g.errs, *errp)
+	if len(g.errs) == 0 {
+		return
+	}
+
+	errs := make([]error, 0, len(g.errs)+1)
+	if *errp != nil {
+		errs = append(errs, *errp)
+	}
+	errs = append(errs, g.errs...)
+
 	joinErrorsFunc := g.joinErrorsFunc
 	if g.joinErrorsFunc == nil {
 		joinErrorsFunc = errors.Join
