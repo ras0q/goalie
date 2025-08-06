@@ -106,7 +106,7 @@ func main() {
     // Output:
     // ERROR:
     // close go.mod: file already closed
-    // internal error: failed to convert string to integer: strconv.Atoi: parsing "N0T 1NTEGER": invalid syntax
+    // internal error: failed to parse string: strconv.Atoi: parsing "ABC": invalid syntax
     //
     // is os.ErrClosed?:     true
     // is ErrInternal?:      true
@@ -125,15 +125,15 @@ func run() (err error) {
         return fmt.Errorf("%w: failed to open file: %w", ErrInternal, err)
     }
     // defer f.Close()     // 🧐 errcheck: Error return value of `f.Close` is not checked.
-    defer g.Guard(f.Close) // ✅ Use g.Guard to capture errors from the deferred cleanup function.
+    defer g.Guard(f.Close) // ✅ Use g.Guard to capture errors from the deferred cleanup.
 
     // ❌ This code close the file explicitly by mistake.
     _ = f.Close()
 
     // ❌ This code always fails.
-    _, err = strconv.Atoi("N0T 1NTEGER")
+    _, err = strconv.Atoi("ABC")
     if err != nil {
-        return fmt.Errorf("%w: failed to convert string to integer: %w", ErrInternal, err)
+        return fmt.Errorf("%w: failed to parse string: %w", ErrInternal, err)
     }
 
     return nil
