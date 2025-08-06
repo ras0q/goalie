@@ -6,7 +6,71 @@ Goalie (/góʊli/) is a Go library designed to **reliably capture and collect er
 
 Named for its role, much like a **goalie (goalkeeper)**, Goalie ensures that no errors from deferred cleanup operations are missed at the end of Go function execution.
 
-## Usage
+## The Story of Common `defer` Mistakes
+
+It's late at night. You've just written some code to read a file and process its contents:
+
+```go
+func processFile(path string) error {
+    f, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    defer f.Close() // Oops!
+    // ... do something ...
+    return nil
+}
+```
+
+At first glance, this looks fine. But running a static analysis tool like `errcheck` will already warn you:
+
+```
+errcheck: Error return value of `f.Close` is not checked
+```
+
+Unfortunately, **any error returned by `f.Close()` is silently ignored**. If `f.Close()` fails, you'll never know!
+
+You might try to improve things by logging the error in a deferred function:
+
+```go
+func processFile(path string) error {
+    f, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    defer func() {
+        if cerr := f.Close(); cerr != nil {
+            log.Printf("failed to close: %v", cerr)
+        }
+    }()
+    // ... do something ...
+    return nil
+}
+```
+
+But here, while the error is just logged, **the error from `f.Close()` is not returned to the caller** and is effectively lost for upstream error handling.
+
+Worse yet, after being nagged one too many times by errcheck’s warnings about unchecked errors in defer statements, a tired developer might be tempted to silence the error completely. The result? Adding a comment like `//nolint:errcheck` to just make the warning go away—this is the worst possible move:
+
+```go
+func processFile(path string) error {
+    f, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    defer f.Close() //nolint:errcheck // 😱 Oh no! You can't be serious! Errors are just thrown away!
+    // ... do something ...
+    return nil
+}
+```
+
+This practice hides problems instead of solving them, making error detection even harder.
+
+These patterns are surprisingly common—and subtle! Goalie exists to ensure that all errors from deferred cleanup are reliably collected and returned, never lost or forgotten.
+
+## A Better Way: Goalie
+
+With Goalie, you can ensure that all errors from deferred cleanup are properly collected and reported. No more silent failures or hidden cleanup mistakes!
 
 > [!CAUTION]
 > Goalie is only for handling errors from cleanup operations, not for general error handling.
@@ -80,11 +144,6 @@ For existing projects, we provide a migration tool to automatically insert Goali
 
 The tool will analyze your code and suggest fixes for any `defer` statements that might be missing error handling.
 
-### Usage
-
-> [!CAUTION]
-> Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
-
 Run the migrator on your project:
 
 ```bash
@@ -95,3 +154,5 @@ go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -diff -fix ./
 go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -fix ./...
 ```
 
+> [!CAUTION]
+> Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
