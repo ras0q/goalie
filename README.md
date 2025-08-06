@@ -40,6 +40,7 @@ func processFile(path string) error {
     }
     defer func() {
         if cerr := f.Close(); cerr != nil {
+            // 😶 Only logs the error, does not return it!
             log.Printf("failed to close: %v", cerr)
         }
     }()
@@ -58,7 +59,8 @@ func processFile(path string) error {
     if err != nil {
         return err
     }
-    defer f.Close() //nolint:errcheck // 😱 Oh no! You can't be serious! Errors are just thrown away!
+    // 😱 Oh no! You can't be serious! Errors are just thrown away!
+    defer f.Close() //nolint:errcheck
     // ... do something ...
     return nil
 }
