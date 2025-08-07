@@ -1,4 +1,4 @@
-module gihtub.com/ras0q/goalie/migrator
+module github.com/ras0q/goalie/migrator
 
 go 1.24.5
 

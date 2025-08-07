@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gihtub.com/ras0q/goalie/migrator"
+	"github.com/ras0q/goalie/migrator"
 	"golang.org/x/tools/go/analysis/singlechecker"
 )
 

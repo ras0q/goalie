@@ -3,7 +3,7 @@ package migrator_test
 import (
 	"testing"
 
-	"gihtub.com/ras0q/goalie/migrator"
+	"github.com/ras0q/goalie/migrator"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
