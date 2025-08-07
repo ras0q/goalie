@@ -158,3 +158,8 @@ go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -fix ./...
 
 > [!CAUTION]
 > Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
+
+## Acknowledgement
+
+This project was inspired by the error handling patterns found in
+[`go.dev/x/pkgsite`](https://cs.opensource.google/go/x/pkgsite/+/master:internal/derrors/derrors.go;l=231-244;drc=c20a88edadfbe20d624856081ccf9de2a2e6b945).
