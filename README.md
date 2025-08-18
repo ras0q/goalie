@@ -16,7 +16,8 @@ func processFile(path string) error {
     if err != nil {
         return err
     }
-    defer f.Close() // Oops!
+    // 🚨 Careful!
+    defer f.Close()
     // ... do something ...
     return nil
 }
@@ -32,18 +33,20 @@ Unfortunately, **any error returned by `f.Close()` is silently ignored**. If `f.
 
 You might try to improve things by logging the error in a deferred function:
 
-```go
+```diff
 func processFile(path string) error {
     f, err := os.Open(path)
     if err != nil {
         return err
     }
-    defer func() {
-        if cerr := f.Close(); cerr != nil {
-            // 😶 Only logs the error, does not return it!
-            log.Printf("failed to close: %v", cerr)
-        }
-    }()
+-   // 🚨 Careful!
+-   defer f.Close()
++   defer func() {
++       if cerr := f.Close(); cerr != nil {
++           // 😶 Only logs the error, does not return it!
++           log.Printf("failed to close: %v", cerr)
++       }
++   }()
     // ... do something ...
     return nil
 }
@@ -53,14 +56,16 @@ But here, while the error is just logged, **the error from `f.Close()` is not re
 
 Worse yet, after being nagged one too many times by errcheck’s warnings about unchecked errors in defer statements, a tired developer might be tempted to silence the error completely. The result? Adding a comment like `//nolint:errcheck` to just make the warning go away—this is the worst possible move:
 
-```go
+```diff
 func processFile(path string) error {
     f, err := os.Open(path)
     if err != nil {
         return err
     }
-    // 😱 Oh no! You can't be serious! Errors are just thrown away!
-    defer f.Close() //nolint:errcheck
+-   // 🚨 Careful!
+-   defer f.Close()
++   // 😱 Oh no! You can't be serious! Errors are just thrown away!
++   defer f.Close() //nolint:errcheck
     // ... do something ...
     return nil
 }
@@ -77,68 +82,27 @@ With Goalie, you can ensure that all errors from deferred cleanup are properly c
 > [!CAUTION]
 > Goalie is only for handling errors from cleanup operations, not for general error handling.
 
-See [Godoc](https://pkg.go.dev/github.com/ras0q/goalie), [./goalie_test.go](./goalie_test.go) and [./_examples](./_examples) for details.
+```diff
+-func processFile(path string) error {
++func processFile(path string) (err error) {
++   g := goalie.New()
++   // 👍 Use g.Collect to collect all captured errors at final!
++   defer g.Collect(&err)
 
-<!-- Developer note: This sample code is copied from ./_examples/basic/main.go. Keep in sync. -->
-
-```go
-package main
-
-import (
-    "errors"
-    "fmt"
-    "os"
-    "strconv"
-
-    "github.com/ras0q/goalie"
-)
-
-func main() {
-    if err := run(); err != nil {
-        fmt.Printf("EROOR:\n%+v\n\n", err)
-
-        fmt.Printf("is os.ErrClosed?:     %t\n", errors.Is(err, os.ErrClosed))
-        fmt.Printf("is ErrInternal?:      %t\n", errors.Is(err, ErrInternal))
-        numError := &strconv.NumError{}
-        fmt.Printf("as strconv.NumError?: %t\n", errors.As(err, &numError))
-    }
-
-    // Output:
-    // ERROR:
-    // close go.mod: file already closed
-    // internal error: failed to parse string: strconv.Atoi: parsing "ABC": invalid syntax
-    //
-    // is os.ErrClosed?:     true
-    // is ErrInternal?:      true
-    // as strconv.NumError?: true
-}
-
-var ErrInternal = errors.New("internal error")
-
-func run() (err error) {
-    g := goalie.New()
-    defer g.Collect(&err) // ✅ Use g.Collect to collect all captured errors at final.
-
-    // Normal error handling for non-deferred operations should be done separately.
-    f, err := os.Open("go.mod")
+    f, err := os.Open(path)
     if err != nil {
-        return fmt.Errorf("%w: failed to open file: %w", ErrInternal, err)
+        return err
     }
-    // defer f.Close()     // 🧐 errcheck: Error return value of `f.Close` is not checked.
-    defer g.Guard(f.Close) // ✅ Use g.Guard to capture errors from the deferred cleanup.
-
-    // ❌ This code close the file explicitly by mistake.
-    _ = f.Close()
-
-    // ❌ This code always fails.
-    _, err = strconv.Atoi("ABC")
-    if err != nil {
-        return fmt.Errorf("%w: failed to parse string: %w", ErrInternal, err)
-    }
-
+-   // 🚨 Careful!
+-   defer f.Close()
++   // 👍 Use g.Guard to capture errors from the deferred cleanup!
++   defer g.Guard(f.Close)
+    // ... do something ...
     return nil
 }
 ```
+
+See [Godoc](https://pkg.go.dev/github.com/ras0q/goalie), [./goalie_test.go](./goalie_test.go) and [./_examples](./_examples) for details.
 
 ## Integrating Goalie into Existing Projects
 
