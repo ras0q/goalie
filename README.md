@@ -148,6 +148,9 @@ The tool will analyze your code and suggest fixes for any `defer` statements tha
 
 Run the migrator on your project:
 
+> [!CAUTION]
+> Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
+
 ```bash
 # Check changes
 go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -diff -fix ./...
@@ -156,8 +159,12 @@ go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -diff -fix ./
 go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -fix ./...
 ```
 
-> [!CAUTION]
-> Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
+After migration, you should organize imports.
+
+```bash
+go mod tidy
+go run golang.org/x/tools/cmd/goimports@latest -w .
+```
 
 ## Acknowledgement
 
