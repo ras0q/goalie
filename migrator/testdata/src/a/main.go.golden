@@ -10,6 +10,8 @@ func main() {
 	if _, err := run(); err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
+
+	defer f() // want `missed error in defer statement, but cannot autofix because enclosing function f\(\) does not return an error: main`
 }
 
 func run() (_ int, err error) {
