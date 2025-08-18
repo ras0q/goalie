@@ -12,11 +12,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        working-directory:
+          - .
+          - ./migrator
+    defaults:
+      run:
+        working-directory: ${{ matrix.working-directory }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        go-version-file: go.mod
+        go-version-file: ${{ matrix.working-directory }}/go.mod
     - run: go vet ./...
     - run: go build -v ./...
     - run: go test -v ./...
