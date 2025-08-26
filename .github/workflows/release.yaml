@@ -1,0 +1,46 @@
+name: Release tags
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure migrator tag exists and push if missing
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          MIG_TAG="migrator/${TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # check if tag exists on remote
+          if git ls-remote --tags origin "refs/tags/${MIG_TAG}" | grep -q "refs/tags/${MIG_TAG}"; then
+            echo "Remote tag ${MIG_TAG} already exists, skipping creation"
+          else
+            git tag -a "${MIG_TAG}" -m "Migrator ${TAG}" "${GITHUB_SHA}"
+            git push origin "refs/tags/${MIG_TAG}"
+            echo "Pushed tag ${MIG_TAG}"
+          fi
+      - name: Create release for root tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          gh release create $tag --generate-notes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Create release for migrator tag
+        run: |
+          tag="migrator/${GITHUB_REF_NAME}"
+          gh release create $tag --generate-notes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
