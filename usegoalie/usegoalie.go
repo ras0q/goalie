@@ -1,4 +1,4 @@
-package migrator
+package usegoalie
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var GoalieAnalyzer = &analysis.Analyzer{
+var Analyzer = &analysis.Analyzer{
 	Name: "goalieanalyzer",
 	Doc:  "checks for missed errors in `defer`'d functions",
 	Requires: []*analysis.Analyzer{

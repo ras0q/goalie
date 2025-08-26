@@ -17,30 +17,30 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Ensure migrator tag exists and push if missing
+      - name: Ensure usegoalie tag exists and push if missing
         shell: bash
         run: |
           TAG="${GITHUB_REF_NAME}"
-          MIG_TAG="migrator/${TAG}"
+          SUB_TAG="usegoalie/${TAG}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # check if tag exists on remote
-          if git ls-remote --tags origin "refs/tags/${MIG_TAG}" | grep -q "refs/tags/${MIG_TAG}"; then
-            echo "Remote tag ${MIG_TAG} already exists, skipping creation"
+          if git ls-remote --tags origin "refs/tags/${SUB_TAG}" | grep -q "refs/tags/${SUB_TAG}"; then
+            echo "Remote tag ${SUB_TAG} already exists, skipping creation"
           else
-            git tag -a "${MIG_TAG}" -m "Migrator ${TAG}" "${GITHUB_SHA}"
-            git push origin "refs/tags/${MIG_TAG}"
-            echo "Pushed tag ${MIG_TAG}"
+            git tag -a "${SUB_TAG}" -m "usegoalie ${TAG}" "${GITHUB_SHA}"
+            git push origin "refs/tags/${SUB_TAG}"
+            echo "Pushed tag ${SUB_TAG}"
           fi
-      - name: Create release for root tag
+      - name: Create release for usegoalie tag
         run: |
-          tag="${GITHUB_REF_NAME}"
+          tag="usegoalie/${GITHUB_REF_NAME}"
           gh release create $tag --generate-notes
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Create release for migrator tag
+      - name: Create release for root tag
         run: |
-          tag="migrator/${GITHUB_REF_NAME}"
+          tag="${GITHUB_REF_NAME}"
           gh release create $tag --generate-notes
         env:
           GITHUB_TOKEN: ${{ github.token }}

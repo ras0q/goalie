@@ -110,17 +110,17 @@ For existing projects, we provide a migration tool to automatically insert Goali
 
 The tool will analyze your code and suggest fixes for any `defer` statements that might be missing error handling.
 
-Run the migrator on your project:
+Run the migrator `usegoalie` on your project:
 
 > [!CAUTION]
 > Always review the changes made by the migrator, especially in complex functions, to ensure correctness.
 
 ```bash
 # Check changes
-go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -diff -fix ./...
+go run github.com/ras0q/goalie/usegoalie/cmd/usegoalie@latest -diff -fix ./...
 
 # Apply changes
-go run github.com/ras0q/goalie/migrator/cmd/goalie-migrator@latest -fix ./...
+go run github.com/ras0q/goalie/usegoalie/cmd/usegoalie@latest -fix ./...
 ```
 
 After migration, you should organize imports.

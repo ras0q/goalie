@@ -1,5 +1,4 @@
-// Deprecated: use github.com/ras0q/goalie/usegoalie
-module github.com/ras0q/goalie/migrator
+module github.com/ras0q/goalie/usegoalie
 
 go 1.24.5
 
