@@ -5,26 +5,28 @@ name: Go
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         working-directory:
           - .
-          - ./migrator
+          - ./usegoalie
     defaults:
       run:
         working-directory: ${{ matrix.working-directory }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version-file: ${{ matrix.working-directory }}/go.mod
-    - run: go vet ./...
-    - run: go build -v ./...
-    - run: go test -v ./...
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.working-directory }}/go.mod
+      - run: go vet ./...
+      - run: go build -v ./...
+      - run: go test -v ./...
