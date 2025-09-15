@@ -17,6 +17,7 @@ type Goalie struct {
 func New(options ...Option) *Goalie {
 	g := Goalie{
 		wrapErrorFunc:  defaultWrapErrorFunc,
+		joinErrorsFunc: defaultJoinErrorsFunc,
 	}
 
 	for _, o := range options {
@@ -114,4 +115,12 @@ func WithJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) Option {
 	return func(g *Goalie) {
 		g.joinErrorsFunc = joinErrorsFunc
 	}
+}
+
+var defaultJoinErrorsFunc JoinErrorsFunc
+
+// SetDefaultJoinErrorsFunc sets the default function used to join multiple errors.
+// This function is used when no custom join function is provided to a Goalie instance.
+func SetDefaultJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) {
+	defaultJoinErrorsFunc = joinErrorsFunc
 }
