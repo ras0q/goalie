@@ -143,3 +143,66 @@ func Test_SetDefaultWrapErrorFunc(t *testing.T) {
 		})
 	}
 }
+
+// Custom errors joiner for testing.
+// This does not implement Unwrap, so [errors.Is] and [errors.As] do not work against wrapped errors.
+type customJoinError struct {
+	err []error
+}
+
+func (e *customJoinError) Error() string {
+	return fmt.Sprintf("custom error: %v", e.err)
+}
+
+func customJoin(errors ...error) error {
+	return &customJoinError{err: errors}
+}
+
+func Test_SetDefaultJoinErrorsFunc(t *testing.T) {
+	type testcase struct {
+		joinErrorsFunc goalie.JoinErrorsFunc
+		errAssertFunc  func(t *testing.T, err error)
+	}
+
+	f := func() (err error) {
+		g := goalie.New()
+		defer g.Collect(&err)
+
+		defer g.Guard(func() error {
+			return os.ErrClosed
+		})
+		defer g.Guard(func() error {
+			return errInternal
+		})
+
+		return nil
+	}
+
+	testcases := map[string]testcase{
+		"no custom join": {
+			joinErrorsFunc: nil,
+			errAssertFunc: func(t *testing.T, err error) {
+				assert(t, true, errors.Is(err, os.ErrClosed))
+				assert(t, true, errors.Is(err, errInternal))
+			},
+		},
+		"join with custom error": {
+			joinErrorsFunc: customJoin,
+			errAssertFunc: func(t *testing.T, err error) {
+				assert(t, false, errors.Is(err, os.ErrClosed)) // customJoinError does not implement Unwrap, so errors.Is returns false
+				assert(t, false, errors.Is(err, errInternal))
+				assert(t, true, errors.As(err, new(*customJoinError)))
+			},
+		},
+	}
+
+	for name, tc := range testcases {
+		t.Run(name, func(t *testing.T) {
+			goalie.SetDefaultJoinErrorsFunc(tc.joinErrorsFunc)
+			t.Cleanup(func() { goalie.SetDefaultJoinErrorsFunc(nil) })
+
+			err := f()
+			tc.errAssertFunc(t, err)
+		})
+	}
+}
