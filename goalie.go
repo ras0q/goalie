@@ -15,7 +15,9 @@ type Goalie struct {
 
 // New creates a new Goalie instance.
 func New(options ...Option) *Goalie {
-	g := Goalie{}
+	g := Goalie{
+		wrapErrorFunc:  defaultWrapErrorFunc,
+	}
 
 	for _, o := range options {
 		o(&g)
@@ -89,6 +91,14 @@ func WithWrapErrorFunc(wrapErrorFunc WrapErrorFunc) Option {
 	return func(g *Goalie) {
 		g.wrapErrorFunc = wrapErrorFunc
 	}
+}
+
+var defaultWrapErrorFunc WrapErrorFunc
+
+// SetDefaultWrapErrorFunc sets the default function used to wrap an error.
+// This function is used when no custom wrap function is provided to a Goalie instance.
+func SetDefaultWrapErrorFunc(wrapErrorFunc WrapErrorFunc) {
+	defaultWrapErrorFunc = wrapErrorFunc
 }
 
 // JoinErrorsFunc is a function type for joining multiple errors into a single error.
