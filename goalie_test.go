@@ -12,7 +12,9 @@ var (
 	errInternal = errors.New("internal error")
 )
 
-// This function has too many bugs 😅
+// This function simulates many bugs.
+// - It closes the file explicitly even if it is already closed with defer.
+// - It always returns an internal error.
 func countLines(path string) (_ int, err error) {
 	g := goalie.New()
 	defer g.Collect(&err)
@@ -33,7 +35,6 @@ func countLines(path string) (_ int, err error) {
 	return -1, errInternal
 }
 
-// assert helper
 func assert[T comparable](t *testing.T, expected, got T) {
 	t.Helper()
 	if got != expected {
