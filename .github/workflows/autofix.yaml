@@ -1,0 +1,23 @@
+name: autofix.ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+      - run: |
+          go fmt ./...
+          { cd usegoalie && go fmt ./...; }
+          { cd _examples && go fmt ./...; }
+      - run: go run golang.org/x/tools/cmd/goimports@latest -w .
+      - uses: autofix-ci/action@v1

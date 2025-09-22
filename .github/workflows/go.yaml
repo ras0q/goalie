@@ -4,7 +4,6 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    branches: ["main"]
 
 jobs:
   build:
@@ -25,8 +24,5 @@ jobs:
         with:
           go-version-file: ${{ matrix.working-directory }}/go.mod
       - run: go vet ./...
-      - run: go fmt ./...
-      - run: go run golang.org/x/tools/cmd/goimports@latest -w .
-      - uses: autofix-ci/action@v1
       - run: go build -v ./...
       - run: go test -v ./...
