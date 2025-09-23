@@ -139,65 +139,55 @@ func Test_SetDefaultWrapErrorFunc(t *testing.T) {
 	}
 }
 
-// Custom errors joiner for testing.
-// This does not implement Unwrap, so [errors.Is] and [errors.As] do not work against wrapped errors.
-type customJoinError struct {
-	err []error
-}
-
-func (e *customJoinError) Error() string {
-	return fmt.Sprintf("custom error: %v", e.err)
-}
-
-func customJoin(errors ...error) error {
-	return &customJoinError{err: errors}
-}
-
 func Test_SetDefaultJoinErrorsFunc(t *testing.T) {
+	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
-		joinErrorsFunc goalie.JoinErrorsFunc
-		errAssertFunc  func(t *testing.T, err error)
+		joinErrorsFunc      goalie.JoinErrorsFunc
+		path                string
+		isFileNotExistError bool
+		isFileClosedError   bool
+		isInternalError     bool
+		isUnexpectedError   bool
 	}
 
-	f := func() (err error) {
-		g := goalie.New()
-		defer g.Collect(&err)
+	run := func(t *testing.T, tc testcase) {
+		t.Helper()
 
-		defer g.Guard(func() error {
-			return os.ErrClosed
-		})
-		defer g.Guard(func() error {
-			return errInternal
-		})
+		goalie.SetDefaultJoinErrorsFunc(tc.joinErrorsFunc)
+		t.Cleanup(func() { goalie.SetDefaultJoinErrorsFunc(nil) })
 
-		return nil
+		_, err := countLines(tc.path)
+		if err != nil {
+			assert(t, tc.isFileNotExistError, errors.Is(err, os.ErrNotExist))
+			assert(t, tc.isFileClosedError, errors.Is(err, os.ErrClosed))
+			assert(t, tc.isInternalError, errors.Is(err, errInternal))
+			assert(t, tc.isUnexpectedError, errors.Is(err, errUnexpected))
+			return
+		}
 	}
 
 	testcases := map[string]testcase{
 		"no custom join": {
-			joinErrorsFunc: nil,
-			errAssertFunc: func(t *testing.T, err error) {
-				assert(t, true, errors.Is(err, os.ErrClosed))
-				assert(t, true, errors.Is(err, errInternal))
-			},
+			joinErrorsFunc:      nil,
+			path:                "goalie_test.go",
+			isFileNotExistError: false,
+			isFileClosedError:   true,
+			isInternalError:     true,
+			isUnexpectedError:   false,
 		},
 		"join with custom error": {
-			joinErrorsFunc: customJoin,
-			errAssertFunc: func(t *testing.T, err error) {
-				assert(t, false, errors.Is(err, os.ErrClosed)) // customJoinError does not implement Unwrap, so errors.Is returns false
-				assert(t, false, errors.Is(err, errInternal))
-				assert(t, true, errors.As(err, new(*customJoinError)))
-			},
+			joinErrorsFunc:      func(err ...error) error { return errors.Join(append([]error{errUnexpected}, err...)...) },
+			path:                "goalie_test.go",
+			isFileNotExistError: false,
+			isFileClosedError:   true,
+			isInternalError:     true,
+			isUnexpectedError:   true,
 		},
 	}
 
 	for name, tc := range testcases {
 		t.Run(name, func(t *testing.T) {
-			goalie.SetDefaultJoinErrorsFunc(tc.joinErrorsFunc)
-			t.Cleanup(func() { goalie.SetDefaultJoinErrorsFunc(nil) })
-
-			err := f()
-			tc.errAssertFunc(t, err)
+			run(t, tc)
 		})
 	}
 }
