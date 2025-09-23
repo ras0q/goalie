@@ -86,60 +86,55 @@ func Test_Goalie(t *testing.T) {
 	}
 }
 
-// Custom error wrapper for testing.
-// This does not implement Unwrap, so [errors.Is] and [errors.As] do not work against wrapped errors.
-type customWrapError struct {
-	err error
-}
-
-func (e *customWrapError) Error() string {
-	return fmt.Sprintf("custom error: %v", e.err)
-}
-
-func customWrapper(err error) error {
-	return &customWrapError{err: err}
-}
-
 func Test_SetDefaultWrapErrorFunc(t *testing.T) {
+	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
-		wrapErrorFunc goalie.WrapErrorFunc
-		errAssertFunc func(t *testing.T, err error)
+		wrapErrorFunc       goalie.WrapErrorFunc
+		path                string
+		isFileNotExistError bool
+		isFileClosedError   bool
+		isInternalError     bool
+		isUnexpectedError   bool
 	}
 
-	f := func() (err error) {
-		g := goalie.New()
-		defer g.Collect(&err)
+	run := func(t *testing.T, tc testcase) {
+		t.Helper()
 
-		defer g.Guard(func() error {
-			return os.ErrClosed
-		})
+		goalie.SetDefaultWrapErrorFunc(tc.wrapErrorFunc)
+		t.Cleanup(func() { goalie.SetDefaultWrapErrorFunc(nil) })
 
-		return nil
+		_, err := countLines(tc.path)
+		if err != nil {
+			assert(t, tc.isFileNotExistError, errors.Is(err, os.ErrNotExist))
+			assert(t, tc.isFileClosedError, errors.Is(err, os.ErrClosed))
+			assert(t, tc.isInternalError, errors.Is(err, errInternal))
+			assert(t, tc.isUnexpectedError, errors.Is(err, errUnexpected))
+			return
+		}
 	}
 
 	testcases := map[string]testcase{
 		"no wrapping": {
-			wrapErrorFunc: nil,
-			errAssertFunc: func(t *testing.T, err error) {
-				assert(t, true, errors.Is(err, os.ErrClosed))
-			},
+			wrapErrorFunc:       nil,
+			path:                "goalie_test.go",
+			isFileNotExistError: false,
+			isFileClosedError:   true,
+			isInternalError:     true,
+			isUnexpectedError:   false,
 		},
 		"wrap with custom error": {
-			wrapErrorFunc: customWrapper,
-			errAssertFunc: func(t *testing.T, err error) {
-				assert(t, false, errors.Is(err, os.ErrClosed)) // customWrapError does not implement Unwrap, so errors.Is returns false
-				assert(t, true, errors.As(err, new(*customWrapError)))
-			},
+			wrapErrorFunc:       func(err error) error { return fmt.Errorf("%w, %w", errUnexpected, err) },
+			path:                "goalie_test.go",
+			isFileNotExistError: false,
+			isFileClosedError:   true,
+			isInternalError:     true,
+			isUnexpectedError:   true,
 		},
 	}
 
 	for name, tc := range testcases {
 		t.Run(name, func(t *testing.T) {
-			goalie.SetDefaultWrapErrorFunc(tc.wrapErrorFunc)
-			t.Cleanup(func() { goalie.SetDefaultWrapErrorFunc(nil) })
-
-			err := f()
-			tc.errAssertFunc(t, err)
+			run(t, tc)
 		})
 	}
 }
