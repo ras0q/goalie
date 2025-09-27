@@ -16,8 +16,8 @@ type Goalie struct {
 // New creates a new Goalie instance.
 func New(options ...Option) *Goalie {
 	g := Goalie{
-		wrapErrorFunc:  defaultWrapErrorFunc,
-		joinErrorsFunc: defaultJoinErrorsFunc,
+		wrapErrorFunc:  fallbackWrapErrorFunc,
+		joinErrorsFunc: fallbackJoinErrorsFunc,
 	}
 
 	for _, o := range options {
@@ -94,12 +94,12 @@ func WithWrapErrorFunc(wrapErrorFunc WrapErrorFunc) Option {
 	}
 }
 
-var defaultWrapErrorFunc WrapErrorFunc
+var fallbackWrapErrorFunc WrapErrorFunc
 
-// SetDefaultWrapErrorFunc sets the default function used to wrap an error.
+// SetFallbackWrapErrorFunc sets the fallback function used to wrap an error.
 // This function is used when no custom wrap function is provided to a Goalie instance.
-func SetDefaultWrapErrorFunc(wrapErrorFunc WrapErrorFunc) {
-	defaultWrapErrorFunc = wrapErrorFunc
+func SetFallbackWrapErrorFunc(wrapErrorFunc WrapErrorFunc) {
+	fallbackWrapErrorFunc = wrapErrorFunc
 }
 
 // JoinErrorsFunc is a function type for joining multiple errors into a single error.
@@ -117,10 +117,10 @@ func WithJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) Option {
 	}
 }
 
-var defaultJoinErrorsFunc JoinErrorsFunc
+var fallbackJoinErrorsFunc JoinErrorsFunc = errors.Join
 
-// SetDefaultJoinErrorsFunc sets the default function used to join multiple errors.
+// SetFallbackJoinErrorsFunc sets the fallback function used to join multiple errors.
 // This function is used when no custom join function is provided to a Goalie instance.
-func SetDefaultJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) {
-	defaultJoinErrorsFunc = joinErrorsFunc
+func SetFallbackJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) {
+	fallbackJoinErrorsFunc = joinErrorsFunc
 }

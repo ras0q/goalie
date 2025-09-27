@@ -86,7 +86,7 @@ func Test_Goalie(t *testing.T) {
 	}
 }
 
-func Test_SetDefaultWrapErrorFunc(t *testing.T) {
+func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
 		wrapErrorFunc       goalie.WrapErrorFunc
@@ -100,8 +100,8 @@ func Test_SetDefaultWrapErrorFunc(t *testing.T) {
 	run := func(t *testing.T, tc testcase) {
 		t.Helper()
 
-		goalie.SetDefaultWrapErrorFunc(tc.wrapErrorFunc)
-		t.Cleanup(func() { goalie.SetDefaultWrapErrorFunc(nil) })
+		goalie.SetFallbackWrapErrorFunc(tc.wrapErrorFunc)
+		t.Cleanup(func() { goalie.SetFallbackWrapErrorFunc(nil) })
 
 		_, err := countLines(tc.path)
 		if err != nil {
@@ -139,7 +139,7 @@ func Test_SetDefaultWrapErrorFunc(t *testing.T) {
 	}
 }
 
-func Test_SetDefaultJoinErrorsFunc(t *testing.T) {
+func Test_SetFallbackJoinErrorsFunc(t *testing.T) {
 	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
 		joinErrorsFunc      goalie.JoinErrorsFunc
@@ -153,8 +153,8 @@ func Test_SetDefaultJoinErrorsFunc(t *testing.T) {
 	run := func(t *testing.T, tc testcase) {
 		t.Helper()
 
-		goalie.SetDefaultJoinErrorsFunc(tc.joinErrorsFunc)
-		t.Cleanup(func() { goalie.SetDefaultJoinErrorsFunc(nil) })
+		goalie.SetFallbackJoinErrorsFunc(tc.joinErrorsFunc)
+		t.Cleanup(func() { goalie.SetFallbackJoinErrorsFunc(nil) })
 
 		_, err := countLines(tc.path)
 		if err != nil {
