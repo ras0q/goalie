@@ -15,13 +15,17 @@ type Goalie struct {
 
 // New creates a new Goalie instance.
 func New(options ...Option) *Goalie {
-	g := Goalie{
-		wrapErrorFunc:  fallbackWrapErrorFunc,
-		joinErrorsFunc: fallbackJoinErrorsFunc,
-	}
+	g := Goalie{}
 
 	for _, o := range options {
 		o(&g)
+	}
+
+	if g.wrapErrorFunc == nil {
+		g.wrapErrorFunc = fallbackWrapErrorFunc
+	}
+	if g.joinErrorsFunc == nil {
+		g.joinErrorsFunc = fallbackJoinErrorsFunc
 	}
 
 	return &g
@@ -72,9 +76,7 @@ func (g *Goalie) Collect(errp *error) {
 //	defer g.Guard(file.Close)
 func (g *Goalie) Guard(errFunc func() error) {
 	if err := errFunc(); err != nil {
-		if g.wrapErrorFunc != nil {
-			err = g.wrapErrorFunc(err)
-		}
+		err = g.wrapErrorFunc(err)
 
 		g.errs = append(g.errs, err)
 	}
