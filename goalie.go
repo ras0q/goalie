@@ -21,6 +21,13 @@ func New(options ...Option) *Goalie {
 		o(&g)
 	}
 
+	if g.wrapErrorFunc == nil {
+		g.wrapErrorFunc = fallbackWrapErrorFunc
+	}
+	if g.joinErrorsFunc == nil {
+		g.joinErrorsFunc = fallbackJoinErrorsFunc
+	}
+
 	return &g
 }
 
@@ -69,9 +76,7 @@ func (g *Goalie) Collect(errp *error) {
 //	defer g.Guard(file.Close)
 func (g *Goalie) Guard(errFunc func() error) {
 	if err := errFunc(); err != nil {
-		if g.wrapErrorFunc != nil {
-			err = g.wrapErrorFunc(err)
-		}
+		err = g.wrapErrorFunc(err)
 
 		g.errs = append(g.errs, err)
 	}
@@ -91,6 +96,23 @@ func WithWrapErrorFunc(wrapErrorFunc WrapErrorFunc) Option {
 	}
 }
 
+func noWrapFunc(err error) error {
+	return err
+}
+
+var fallbackWrapErrorFunc WrapErrorFunc = noWrapFunc
+
+// SetFallbackWrapErrorFunc sets the fallback function used to wrap an error.
+// This function is used when no custom wrap function is provided to a Goalie instance.
+func SetFallbackWrapErrorFunc(wrapErrorFunc WrapErrorFunc) error {
+	if wrapErrorFunc == nil {
+		return errors.New("wrapErrorFunc must not be nil")
+	}
+
+	fallbackWrapErrorFunc = wrapErrorFunc
+	return nil
+}
+
 // JoinErrorsFunc is a function type for joining multiple errors into a single error.
 // By default, Goalie uses [errors.Join].
 type JoinErrorsFunc func(...error) error
@@ -104,4 +126,17 @@ func WithJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) Option {
 	return func(g *Goalie) {
 		g.joinErrorsFunc = joinErrorsFunc
 	}
+}
+
+var fallbackJoinErrorsFunc JoinErrorsFunc = errors.Join
+
+// SetFallbackJoinErrorsFunc sets the fallback function used to join multiple errors.
+// This function is used when no custom join function is provided to a Goalie instance.
+func SetFallbackJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) error {
+	if joinErrorsFunc == nil {
+		return errors.New("joinErrorsFunc must not be nil")
+	}
+
+	fallbackJoinErrorsFunc = joinErrorsFunc
+	return nil
 }
