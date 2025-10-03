@@ -89,13 +89,14 @@ func Test_Goalie(t *testing.T) {
 func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
-		setFallbackWrapFunc bool
-		wrapErrorFunc       goalie.WrapErrorFunc
-		path                string
-		isFileNotExistError bool
-		isFileClosedError   bool
-		isInternalError     bool
-		isUnexpectedError   bool
+		setFallbackWrapFunc        bool
+		wrapErrorFunc              goalie.WrapErrorFunc
+		path                       string
+		isSetFallbackWrapFuncError bool
+		isFileNotExistError        bool
+		isFileClosedError          bool
+		isInternalError            bool
+		isUnexpectedError          bool
 	}
 
 	run := func(t *testing.T, tc testcase) {
@@ -103,11 +104,15 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 
 		if tc.setFallbackWrapFunc {
 			err := goalie.SetFallbackWrapErrorFunc(tc.wrapErrorFunc)
-			assert(t, nil, err)
+			assert(t, tc.isSetFallbackWrapFuncError, err != nil)
 			t.Cleanup(func() {
 				err := goalie.SetFallbackWrapErrorFunc(func(err error) error { return err })
 				assert(t, nil, err)
 			})
+
+			if err != nil {
+				return
+			}
 		}
 
 		_, err := countLines(tc.path)
@@ -122,21 +127,28 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 
 	testcases := map[string]testcase{
 		"no wrapping": {
-			setFallbackWrapFunc: false,
-			path:                "goalie_test.go",
-			isFileNotExistError: false,
-			isFileClosedError:   true,
-			isInternalError:     true,
-			isUnexpectedError:   false,
+			setFallbackWrapFunc:        false,
+			path:                       "goalie_test.go",
+			isSetFallbackWrapFuncError: false,
+			isFileNotExistError:        false,
+			isFileClosedError:          true,
+			isInternalError:            true,
+			isUnexpectedError:          false,
 		},
 		"wrap with custom error": {
-			setFallbackWrapFunc: true,
-			wrapErrorFunc:       func(err error) error { return fmt.Errorf("%w, %w", errUnexpected, err) },
-			path:                "goalie_test.go",
-			isFileNotExistError: false,
-			isFileClosedError:   true,
-			isInternalError:     true,
-			isUnexpectedError:   true,
+			setFallbackWrapFunc:        true,
+			wrapErrorFunc:              func(err error) error { return fmt.Errorf("%w, %w", errUnexpected, err) },
+			path:                       "goalie_test.go",
+			isSetFallbackWrapFuncError: false,
+			isFileNotExistError:        false,
+			isFileClosedError:          true,
+			isInternalError:            true,
+			isUnexpectedError:          true,
+		},
+		"setting nil returns error": {
+			setFallbackWrapFunc:        true,
+			wrapErrorFunc:              nil,
+			isSetFallbackWrapFuncError: true,
 		},
 	}
 
@@ -150,13 +162,14 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 func Test_SetFallbackJoinErrorsFunc(t *testing.T) {
 	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
-		setFallbackJoinErrorsFunc bool
-		joinErrorsFunc            goalie.JoinErrorsFunc
-		path                      string
-		isFileNotExistError       bool
-		isFileClosedError         bool
-		isInternalError           bool
-		isUnexpectedError         bool
+		setFallbackJoinErrorsFunc        bool
+		joinErrorsFunc                   goalie.JoinErrorsFunc
+		path                             string
+		isSetFallbackJoinErrorsFuncError bool
+		isFileNotExistError              bool
+		isFileClosedError                bool
+		isInternalError                  bool
+		isUnexpectedError                bool
 	}
 
 	run := func(t *testing.T, tc testcase) {
@@ -164,11 +177,15 @@ func Test_SetFallbackJoinErrorsFunc(t *testing.T) {
 
 		if tc.setFallbackJoinErrorsFunc {
 			err := goalie.SetFallbackJoinErrorsFunc(tc.joinErrorsFunc)
-			assert(t, nil, err)
+			assert(t, tc.isSetFallbackJoinErrorsFuncError, err != nil)
 			t.Cleanup(func() {
 				err := goalie.SetFallbackJoinErrorsFunc(errors.Join)
 				assert(t, nil, err)
 			})
+
+			if err != nil {
+				return
+			}
 		}
 
 		_, err := countLines(tc.path)
@@ -199,6 +216,11 @@ func Test_SetFallbackJoinErrorsFunc(t *testing.T) {
 			isFileClosedError:         true,
 			isInternalError:           true,
 			isUnexpectedError:         true,
+		},
+		"setting nil returns error": {
+			setFallbackJoinErrorsFunc:        true,
+			joinErrorsFunc:                   nil,
+			isSetFallbackJoinErrorsFuncError: true,
 		},
 	}
 
