@@ -94,12 +94,21 @@ func WithWrapErrorFunc(wrapErrorFunc WrapErrorFunc) Option {
 	}
 }
 
-var fallbackWrapErrorFunc WrapErrorFunc
+func noWrapFunc(err error) error {
+	return err
+}
+
+var fallbackWrapErrorFunc WrapErrorFunc = noWrapFunc
 
 // SetFallbackWrapErrorFunc sets the fallback function used to wrap an error.
 // This function is used when no custom wrap function is provided to a Goalie instance.
-func SetFallbackWrapErrorFunc(wrapErrorFunc WrapErrorFunc) {
+func SetFallbackWrapErrorFunc(wrapErrorFunc WrapErrorFunc) error {
+	if wrapErrorFunc == nil {
+		return errors.New("wrapErrorFunc must not be nil")
+	}
+
 	fallbackWrapErrorFunc = wrapErrorFunc
+	return nil
 }
 
 // JoinErrorsFunc is a function type for joining multiple errors into a single error.
@@ -121,6 +130,11 @@ var fallbackJoinErrorsFunc JoinErrorsFunc = errors.Join
 
 // SetFallbackJoinErrorsFunc sets the fallback function used to join multiple errors.
 // This function is used when no custom join function is provided to a Goalie instance.
-func SetFallbackJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) {
+func SetFallbackJoinErrorsFunc(joinErrorsFunc JoinErrorsFunc) error {
+	if joinErrorsFunc == nil {
+		return errors.New("joinErrorsFunc must not be nil")
+	}
+
 	fallbackJoinErrorsFunc = joinErrorsFunc
+	return nil
 }
