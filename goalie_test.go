@@ -89,6 +89,7 @@ func Test_Goalie(t *testing.T) {
 func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
+		setFallbackWrapFunc bool
 		wrapErrorFunc       goalie.WrapErrorFunc
 		path                string
 		isFileNotExistError bool
@@ -100,8 +101,14 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 	run := func(t *testing.T, tc testcase) {
 		t.Helper()
 
-		goalie.SetFallbackWrapErrorFunc(tc.wrapErrorFunc)
-		t.Cleanup(func() { goalie.SetFallbackWrapErrorFunc(nil) })
+		if tc.setFallbackWrapFunc {
+			err := goalie.SetFallbackWrapErrorFunc(tc.wrapErrorFunc)
+			assert(t, nil, err)
+			t.Cleanup(func() {
+				err := goalie.SetFallbackWrapErrorFunc(func(err error) error { return err })
+				assert(t, nil, err)
+			})
+		}
 
 		_, err := countLines(tc.path)
 		if err != nil {
@@ -115,7 +122,7 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 
 	testcases := map[string]testcase{
 		"no wrapping": {
-			wrapErrorFunc:       nil,
+			setFallbackWrapFunc: false,
 			path:                "goalie_test.go",
 			isFileNotExistError: false,
 			isFileClosedError:   true,
@@ -123,6 +130,7 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 			isUnexpectedError:   false,
 		},
 		"wrap with custom error": {
+			setFallbackWrapFunc: true,
 			wrapErrorFunc:       func(err error) error { return fmt.Errorf("%w, %w", errUnexpected, err) },
 			path:                "goalie_test.go",
 			isFileNotExistError: false,
@@ -142,19 +150,26 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 func Test_SetFallbackJoinErrorsFunc(t *testing.T) {
 	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
-		joinErrorsFunc      goalie.JoinErrorsFunc
-		path                string
-		isFileNotExistError bool
-		isFileClosedError   bool
-		isInternalError     bool
-		isUnexpectedError   bool
+		setFallbackJoinErrorsFunc bool
+		joinErrorsFunc            goalie.JoinErrorsFunc
+		path                      string
+		isFileNotExistError       bool
+		isFileClosedError         bool
+		isInternalError           bool
+		isUnexpectedError         bool
 	}
 
 	run := func(t *testing.T, tc testcase) {
 		t.Helper()
 
-		goalie.SetFallbackJoinErrorsFunc(tc.joinErrorsFunc)
-		t.Cleanup(func() { goalie.SetFallbackJoinErrorsFunc(nil) })
+		if tc.setFallbackJoinErrorsFunc {
+			err := goalie.SetFallbackJoinErrorsFunc(tc.joinErrorsFunc)
+			assert(t, nil, err)
+			t.Cleanup(func() {
+				err := goalie.SetFallbackJoinErrorsFunc(errors.Join)
+				assert(t, nil, err)
+			})
+		}
 
 		_, err := countLines(tc.path)
 		if err != nil {
@@ -168,20 +183,22 @@ func Test_SetFallbackJoinErrorsFunc(t *testing.T) {
 
 	testcases := map[string]testcase{
 		"no custom join": {
-			joinErrorsFunc:      nil,
-			path:                "goalie_test.go",
-			isFileNotExistError: false,
-			isFileClosedError:   true,
-			isInternalError:     true,
-			isUnexpectedError:   false,
+			setFallbackJoinErrorsFunc: false,
+			joinErrorsFunc:            nil,
+			path:                      "goalie_test.go",
+			isFileNotExistError:       false,
+			isFileClosedError:         true,
+			isInternalError:           true,
+			isUnexpectedError:         false,
 		},
 		"join with custom error": {
-			joinErrorsFunc:      func(err ...error) error { return errors.Join(append([]error{errUnexpected}, err...)...) },
-			path:                "goalie_test.go",
-			isFileNotExistError: false,
-			isFileClosedError:   true,
-			isInternalError:     true,
-			isUnexpectedError:   true,
+			setFallbackJoinErrorsFunc: true,
+			joinErrorsFunc:            func(err ...error) error { return errors.Join(append([]error{errUnexpected}, err...)...) },
+			path:                      "goalie_test.go",
+			isFileNotExistError:       false,
+			isFileClosedError:         true,
+			isInternalError:           true,
+			isUnexpectedError:         true,
 		},
 	}
 
