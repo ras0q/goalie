@@ -89,7 +89,6 @@ func Test_Goalie(t *testing.T) {
 func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 	errUnexpected := errors.New("unexpected error")
 	type testcase struct {
-		setFallbackWrapFunc        bool
 		wrapErrorFunc              goalie.WrapErrorFunc
 		path                       string
 		isSetFallbackWrapFuncError bool
@@ -102,20 +101,18 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 	run := func(t *testing.T, tc testcase) {
 		t.Helper()
 
-		if tc.setFallbackWrapFunc {
-			err := goalie.SetFallbackWrapErrorFunc(tc.wrapErrorFunc)
-			assert(t, tc.isSetFallbackWrapFuncError, err != nil)
-			t.Cleanup(func() {
-				err := goalie.SetFallbackWrapErrorFunc(func(err error) error { return err })
-				assert(t, nil, err)
-			})
+		err := goalie.SetFallbackWrapErrorFunc(tc.wrapErrorFunc)
+		assert(t, tc.isSetFallbackWrapFuncError, err != nil)
+		t.Cleanup(func() {
+			err := goalie.SetFallbackWrapErrorFunc(func(err error) error { return err })
+			assert(t, nil, err)
+		})
 
-			if err != nil {
-				return
-			}
+		if err != nil {
+			return
 		}
 
-		_, err := countLines(tc.path)
+		_, err = countLines(tc.path)
 		if err != nil {
 			assert(t, tc.isFileNotExistError, errors.Is(err, os.ErrNotExist))
 			assert(t, tc.isFileClosedError, errors.Is(err, os.ErrClosed))
@@ -126,17 +123,7 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 	}
 
 	testcases := map[string]testcase{
-		"no wrapping": {
-			setFallbackWrapFunc:        false,
-			path:                       "goalie_test.go",
-			isSetFallbackWrapFuncError: false,
-			isFileNotExistError:        false,
-			isFileClosedError:          true,
-			isInternalError:            true,
-			isUnexpectedError:          false,
-		},
 		"wrap with custom error": {
-			setFallbackWrapFunc:        true,
 			wrapErrorFunc:              func(err error) error { return fmt.Errorf("%w, %w", errUnexpected, err) },
 			path:                       "goalie_test.go",
 			isSetFallbackWrapFuncError: false,
@@ -146,7 +133,6 @@ func Test_SetFallbackWrapErrorFunc(t *testing.T) {
 			isUnexpectedError:          true,
 		},
 		"setting nil returns error": {
-			setFallbackWrapFunc:        true,
 			wrapErrorFunc:              nil,
 			isSetFallbackWrapFuncError: true,
 		},
