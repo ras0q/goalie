@@ -21,13 +21,6 @@ func New(options ...Option) *Goalie {
 		o(&g)
 	}
 
-	if g.wrapErrorFunc == nil {
-		g.wrapErrorFunc = fallbackWrapErrorFunc
-	}
-	if g.joinErrorsFunc == nil {
-		g.joinErrorsFunc = fallbackJoinErrorsFunc
-	}
-
 	return &g
 }
 
@@ -60,7 +53,7 @@ func (g *Goalie) Collect(errp *error) {
 
 	joinErrorsFunc := g.joinErrorsFunc
 	if g.joinErrorsFunc == nil {
-		joinErrorsFunc = errors.Join
+		joinErrorsFunc = fallbackJoinErrorsFunc
 	}
 
 	*errp = joinErrorsFunc(errs...)
@@ -76,7 +69,12 @@ func (g *Goalie) Collect(errp *error) {
 //	defer g.Guard(file.Close)
 func (g *Goalie) Guard(errFunc func() error) {
 	if err := errFunc(); err != nil {
-		err = g.wrapErrorFunc(err)
+		wrapErrorFunc := g.wrapErrorFunc
+		if wrapErrorFunc == nil {
+			wrapErrorFunc = fallbackWrapErrorFunc
+		}
+
+		err = wrapErrorFunc(err)
 
 		g.errs = append(g.errs, err)
 	}
