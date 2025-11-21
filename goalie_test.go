@@ -2,6 +2,7 @@ package goalie_test
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 
@@ -76,6 +77,137 @@ func Test_Goalie(t *testing.T) {
 			isFileNotExistError: true,
 			isFileClosedError:   false,
 			isInternalError:     false,
+		},
+	}
+
+	for name, tc := range testcases {
+		t.Run(name, func(t *testing.T) {
+			run(t, tc)
+		})
+	}
+}
+
+func Test_SetFallbackWrapErrorFunc(t *testing.T) {
+	errUnexpected := errors.New("unexpected error")
+	type testcase struct {
+		wrapErrorFunc              goalie.WrapErrorFunc
+		path                       string
+		isSetFallbackWrapFuncError bool
+		isFileNotExistError        bool
+		isFileClosedError          bool
+		isInternalError            bool
+		isUnexpectedError          bool
+	}
+
+	run := func(t *testing.T, tc testcase) {
+		t.Helper()
+
+		err := goalie.SetFallbackWrapErrorFunc(tc.wrapErrorFunc)
+		assert(t, tc.isSetFallbackWrapFuncError, err != nil)
+		t.Cleanup(func() {
+			err := goalie.SetFallbackWrapErrorFunc(func(err error) error { return err })
+			assert(t, nil, err)
+		})
+
+		if err != nil {
+			return
+		}
+
+		_, err = countLines(tc.path)
+		if err != nil {
+			assert(t, tc.isFileNotExistError, errors.Is(err, os.ErrNotExist))
+			assert(t, tc.isFileClosedError, errors.Is(err, os.ErrClosed))
+			assert(t, tc.isInternalError, errors.Is(err, errInternal))
+			assert(t, tc.isUnexpectedError, errors.Is(err, errUnexpected))
+			return
+		}
+	}
+
+	testcases := map[string]testcase{
+		"wrap with custom error": {
+			wrapErrorFunc:              func(err error) error { return fmt.Errorf("%w, %w", errUnexpected, err) },
+			path:                       "goalie_test.go",
+			isSetFallbackWrapFuncError: false,
+			isFileNotExistError:        false,
+			isFileClosedError:          true,
+			isInternalError:            true,
+			isUnexpectedError:          true,
+		},
+		"setting nil returns error": {
+			wrapErrorFunc:              nil,
+			isSetFallbackWrapFuncError: true,
+		},
+	}
+
+	for name, tc := range testcases {
+		t.Run(name, func(t *testing.T) {
+			run(t, tc)
+		})
+	}
+}
+
+func Test_SetFallbackJoinErrorsFunc(t *testing.T) {
+	errUnexpected := errors.New("unexpected error")
+	type testcase struct {
+		setFallbackJoinErrorsFunc        bool
+		joinErrorsFunc                   goalie.JoinErrorsFunc
+		path                             string
+		isSetFallbackJoinErrorsFuncError bool
+		isFileNotExistError              bool
+		isFileClosedError                bool
+		isInternalError                  bool
+		isUnexpectedError                bool
+	}
+
+	run := func(t *testing.T, tc testcase) {
+		t.Helper()
+
+		if tc.setFallbackJoinErrorsFunc {
+			err := goalie.SetFallbackJoinErrorsFunc(tc.joinErrorsFunc)
+			assert(t, tc.isSetFallbackJoinErrorsFuncError, err != nil)
+			t.Cleanup(func() {
+				err := goalie.SetFallbackJoinErrorsFunc(errors.Join)
+				assert(t, nil, err)
+			})
+
+			if err != nil {
+				return
+			}
+		}
+
+		_, err := countLines(tc.path)
+		if err != nil {
+			assert(t, tc.isFileNotExistError, errors.Is(err, os.ErrNotExist))
+			assert(t, tc.isFileClosedError, errors.Is(err, os.ErrClosed))
+			assert(t, tc.isInternalError, errors.Is(err, errInternal))
+			assert(t, tc.isUnexpectedError, errors.Is(err, errUnexpected))
+			return
+		}
+	}
+
+	testcases := map[string]testcase{
+		"no custom join": {
+			setFallbackJoinErrorsFunc: false,
+			joinErrorsFunc:            nil,
+			path:                      "goalie_test.go",
+			isFileNotExistError:       false,
+			isFileClosedError:         true,
+			isInternalError:           true,
+			isUnexpectedError:         false,
+		},
+		"join with custom error": {
+			setFallbackJoinErrorsFunc: true,
+			joinErrorsFunc:            func(err ...error) error { return errors.Join(append([]error{errUnexpected}, err...)...) },
+			path:                      "goalie_test.go",
+			isFileNotExistError:       false,
+			isFileClosedError:         true,
+			isInternalError:           true,
+			isUnexpectedError:         true,
+		},
+		"setting nil returns error": {
+			setFallbackJoinErrorsFunc:        true,
+			joinErrorsFunc:                   nil,
+			isSetFallbackJoinErrorsFuncError: true,
 		},
 	}
 
